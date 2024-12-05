@@ -36,9 +36,8 @@ def check_direction(i, j, direction):
   for n in range(0, 4):
     new_i = i + (i_offset * n)
     new_j = j + (j_offset * n)
-    if new_i < upper_bound or new_i > lower_bound:
-      return False
-    if new_j < left_bound or new_j > right_bound:
+    if (new_i < upper_bound or new_i > lower_bound or
+        new_j < left_bound  or new_j > right_bound):
       return False
     checked_letters.append(rows[new_i][new_j])
   return ''.join(checked_letters) == 'XMAS'

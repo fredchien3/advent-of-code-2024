@@ -26,30 +26,27 @@ def valid_x_mas(i, j):
 
   fore_corners, back_corners = [], []
   for direction in fore_directions:
-    i_offset, j_offset = direction
-    new_i = i + i_offset
-    new_j = j + j_offset
-    if new_i < upper_bound or new_i > lower_bound:
-      return False
-    if new_j < left_bound or new_j > right_bound:
-      return False
-    fore_corners.append(rows[new_i][new_j])
+    populate_corners(i, j, direction, fore_corners)
   if sorted(fore_corners) != ['M', 'S']:
     return False
 
   for direction in back_directions:
-    i_offset, j_offset = direction
-    new_i = i + i_offset
-    new_j = j + j_offset
-    if new_i < upper_bound or new_i > lower_bound:
-      return False
-    if new_j < left_bound or new_j > right_bound:
-      return False
-    back_corners.append(rows[new_i][new_j])
+    populate_corners(i, j, direction, back_corners)
   if sorted(back_corners) != ['M', 'S']:
     return False
 
   return True
+
+def populate_corners(i, j, direction, result):
+  i_offset, j_offset = direction
+  new_i = i + i_offset
+  new_j = j + j_offset
+
+  if (new_i < upper_bound or new_i > lower_bound or
+      new_j < left_bound  or new_j > right_bound):
+    return
+
+  result.append(rows[new_i][new_j])
 
 total_x_mases = 0
 
