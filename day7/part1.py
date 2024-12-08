@@ -3,44 +3,52 @@ from itertools import product
 file = open('input.txt', 'r')
 lines = file.read().split('\n')
 
-operators = ['+', 'x']
+operators = ['+', '*']
 
-# Given an array of numbers, stick an operator between each number
+# A recursive function. Is passed a list of lists of numbers like [[1, 2, 3]],
+# and outputs permutations by sticking the operators in the gaps between numbers.
 
-def get_all_permutations(numbers):
-  return recursive( [numbers] )
-
-def recursive(list_of_lists):
-  print(list_of_lists)
+def get_all_permutations(list_of_lists):
   if len(list_of_lists) == 1 and len(list_of_lists[0]) <= 1:
     return list_of_lists
 
   output = []
   for number_list in list_of_lists:
-    recursive_case = recursive([number_list[:-1]])
+    recursive_case = get_all_permutations([number_list[:-1]])
     for case in recursive_case:
       for op in operators:
-        output.append(case + [op] + recursive([[number_list[-1]]])[0])
+        output.append(case + [op] + get_all_permutations([[number_list[-1]]])[0])
+
   return output
 
-# def can_possibly_be_achieved(target, string):
-#   components = string.split(' ')
-#   print(components)
-#   layouts = []
-#   layouts.extend(get_all_permutations(components))
+def evaluate(formula):
+  result = formula[0]
 
-print(get_all_permutations([1, 2, 3, 4]))
+  for i in range(1, len(formula) - 1, 2):
+    newformula = ''.join([str(result), formula[i], formula[i+1]])
+    result = eval(newformula)
+
+  return result
+
+def can_possibly_be_achieved(target, string):
+  components = string.split(' ')
+
+  formulas = get_all_permutations([components])
+  for formula in formulas:
+    if target == evaluate(formula):
+      return True
+
+  return False
 
 # I think I am going to start by just brute forcing -
 # trying different permutations of x and + between the numbers
 sum = 0
 
 for line in lines:
-  print(line)
   left, right = line.split(": ")
   if can_possibly_be_achieved(int(left), right):
     sum += int(left)
 
-print(target)
+print(sum)
 
 file.close()
