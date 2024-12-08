@@ -6,10 +6,10 @@ rules, updates = file.read().split('\n\n')
 
 # Key = number
 # Value = an array of numbers which must come after
-hash = defaultdict(list)
+hash = defaultdict(set)
 for rule in rules.split('\n'):
   left, right = rule.split('|')
-  hash[left].append(right)
+  hash[left].add(right)
 
 # Determine which updates are valid
 def is_valid_update(update_string):
