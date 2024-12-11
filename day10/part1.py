@@ -10,16 +10,23 @@ def in_bounds(pos):
 # breadth first search to find all the 9s
 def score(pos):
   score = 0
-
-  queue = deque(pos)
+  current_height = 0
+  queue = deque((pos,)) # stay as a tuple!
+  seen = set()
   while queue:
-    current = queue.popleft()
+    current_pos = queue.popleft()
+    seen.add(current_pos)
     for direction, mod in direction_map.items():
-      i, j = [pos[0] + mod[0], pos[1] + mod[1]]
-      if topo_map[i][j] == 9:
-        score += 1
-      if in_bounds((i, j)) and topo_map[i][j] == current + 1:
-        queue.push((i, j))
+      i, j = [current_pos[0] + mod[0], current_pos[1] + mod[1]]
+
+      if in_bounds((i, j)) and (i, j) not in seen:
+        next_height = topo_map[i][j]
+        # print(next_height)
+        if next_height == current_height + 1:
+          queue.append((i, j))
+          current_height += 1
+        if next_height == 9:
+          score += 1
 
   return score
 
@@ -38,7 +45,6 @@ for i, row in enumerate(topo_map):
 
     if ele == '0':
       trailheads.add((i, j))
-
 total_score = 0
 
 for pos in trailheads:
