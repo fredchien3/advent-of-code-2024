@@ -8,25 +8,32 @@ def in_bounds(pos):
            pos[1] >= 0 and pos[1] < len(topo_map[0]) )
 
 # breadth first search to find all the 9s
+# add all in-bound, +1 height neighbors
 def score(pos):
   score = 0
-  current_height = 0
   queue = deque((pos,)) # stay as a tuple!
   seen = set()
+
   while queue:
     current_pos = queue.popleft()
-    seen.add(current_pos)
-    for direction, mod in direction_map.items():
-      i, j = [current_pos[0] + mod[0], current_pos[1] + mod[1]]
+    i, j = current_pos
+    current_height = topo_map[i][j]
 
-      if in_bounds((i, j)) and (i, j) not in seen:
-        next_height = topo_map[i][j]
-        # print(next_height)
-        if next_height == current_height + 1:
-          queue.append((i, j))
-          current_height += 1
-        if next_height == 9:
-          score += 1
+    if current_height == 9:
+      score += 1
+
+    # check each neighbor for in-bound, +1 height
+    for direction, mod in direction_map.items():
+      next_pos = (i + mod[0], j + mod[1])
+      k, l = next_pos
+
+      if in_bounds(next_pos):
+        next_height = topo_map[k][l]
+
+        if (next_pos not in seen and
+          next_height == current_height + 1):
+          seen.add(next_pos)
+          queue.append(next_pos)
 
   return score
 
