@@ -1,4 +1,5 @@
 from collections import deque, defaultdict
+from classes import Position
 
 directions = {
   'n': (-1,  0),
@@ -7,37 +8,50 @@ directions = {
   'w': ( 0, -1)
 }
 
+opposites = {
+  'n': 's',
+  'e': 'w',
+  's': 'n',
+  'w': 'e'
+}
+
 ### Methods
-def get_neighbor_tiles(tile):
+def get_rotations(position):
   output = []
-  pos = tile['pos']
-  for direction, (dy, dx) in directions.items():
-    y, x = pos
-    new_y, new_x = y + dy, x + dx
+  weight = None
 
-    if (new_y, new_x) in seen_poses: continue
+  for direction in directions:
 
-    if map_string[new_y][new_x] != '#':
+    if position.direction == direction:
+      continue
+    elif position.direction == opposites[direction]:
+      weight = 2000
+    else:
+      weight = 1000
 
-      weight = 1 if direction == tile['direction'] else 1001
-
-      output.append({
-        'pos': (new_y, new_x),
-        'weight': weight,
-        'direction': direction
-      })
-
-      seen_poses.add((new_y, new_x))
+    output.append(Position(position.pos, direction, weight))
 
   return output
 
-def render():
-  output_map = [[' ' for _ in map_string[0]] for _ in map_string]
+def get_forward_neighbor(position):
+  output = []
 
+  y, x = position.pos
+  dy, dx = directions[position.direction]
+  new_y, new_x = (y + dy, x + dx)
 
+  if map_string[new_y][new_x] == '#':
+    return []
 
-  for row in output_map:
-    print(''.join(row))
+  output.append(Position((new_y, new_x), position.direction, 1))
+
+  return output
+
+# def render():
+#   output_map = [[' ' for _ in map_string[0]] for _ in map_string]
+
+#   for row in output_map:
+#     print(''.join(row))
 
 ###
 
@@ -45,57 +59,63 @@ file = open('input.txt', 'r')
 map_string = file.read().split('\n')
 file.close()
 
-
-# Generate an almighty adjacency list with weights, directions, etc.
+# Generate an almighty adjacency list.
 y, x = len(map_string) - 2, 1
-starting_tile = {
-  'pos': (y, x),
-  'weight': 0,
-  'direction': 'e'
-}
 
-tile_queue = deque([starting_tile])
-seen_poses = set(starting_tile['pos'])
-# pos: list of dicts {pos, weight, direction}
+start_position = Position((y, x), 'e', 0)
+position_queue = deque([start_position])
+seen_ids = set(start_position.id)
+
+# adjacency_list[Position.id] => [Position, Position, ...]
 adjacency_list = defaultdict(list)
 
-while tile_queue:
-  tile = tile_queue.popleft()
+while position_queue:
+  position = position_queue.popleft()
+
+  if position.id in seen_ids: continue
+
+  # Add every same-spot rotation to the adjacency list.
+  # This is because from any tile, a rotation is a valid move.
+  rotations = get_rotations(position)
+  adjacency_list[position.id].extend(rotations)
 
   # For each neighbor, add it to the adjacency list
-  neighbor_tiles = get_neighbor_tiles(tile)
+  forward_neighbors = get_forward_neighbor(position)
+  adjacency_list[position.id].extend(forward_neighbors)
 
-  adjacency_list[tile['pos']].extend(
-    neighbor_tiles
-  )
+  # Now continue the BFS traversal with each of the rotations and neighbors.
+  position_queue.extend(adjacency_list[position.id])
 
-  seen_poses.update(tile['pos'] for tile in neighbor_tiles)
-  tile_queue.extend(neighbor_tiles)
+  seen_ids.add(position.id)
 
-# Run Dijkstra's algorithm
-tile_queue = deque([starting_tile])
-seen_poses = set(starting_tile['pos'])
+# Dijkstra's algorithm
+# We will use seen_ids as the set of unvisited nodes.
 distances = defaultdict(lambda: float('inf'))
-distances[starting_tile['pos']] = 0
+distances[start_position.id] = 0
 
-while tile_queue:
-  current_tile = tile_queue.popleft()
-  current_pos = current_tile['pos']
+fy, fx = (1, len(map_string[0]) - 2)
 
-  for neighbor in adjacency_list[current_pos]:
-    n_pos, n_weight = neighbor['pos'], neighbor['weight']
+current_position_id = start_position.id
 
-    if n_pos in seen_poses: continue
+# Could add a condition to exit early when the target is reached
+while seen_ids:
 
-    new_distance = min(distances[n_pos], distances[current_pos] + n_weight)
-    distances[n_pos] = new_distance
+  for adjacency in adjacency_list[current_position_id]:
+    if adjacency.id not in seen_ids: continue
 
-    tile_queue.append(neighbor)
+    previous_shortest = distances[adjacency.id]
+    maybe_shorter = distances[current_position_id] + adjacency.weight
 
-  seen_poses.add(current_pos)
+    distances[adjacency.id] = min(previous_shortest, maybe_shorter)
 
-finish_pos = (1, len(map_string[0]) - 2)
+  seen_ids.remove(current_position_id)
+  if not seen_ids: break
 
-print(distances[(1, 12)])
-print(distances[finish_pos])
-print(distances[(2, 13)])
+  # I know this lookup is very very suboptimal,
+  # it's almost midnight and I just want to get it working right now
+  current_position_id = min(seen_ids, key = lambda k: distances[k])
+
+fy, fx = (1, len(map_string[0]) - 2)
+
+print(distances[fy, fx, 'n'])
+print(distances[fy, fx, 'e'])
